@@ -1,77 +1,72 @@
-import { application } from 'express';
-import { config } from './config.js';
+// Import your configuration
+import { config } from '../function/config.js';
 
-// Khởi tạo client Appwrite
+// Initialize the Appwrite client
 const client = new Appwrite.Client();
 client
-    .setEndpoint(config.endpoint)
-    .setProject(config.projectId);
+  .setEndpoint(config.endpoint)   // Your Appwrite API Endpoint
+  .setProject(config.projectId);    // Your Appwrite Project ID
 
-// Khởi tạo database
+// Initialize the Databases service
 const databases = new Appwrite.Databases(client);
-const cors = require('cors');
 
-application.use(cors());
-// Hàm tìm kiếm
+// Function to perform the search
 async function performSearch() {
-    const searchInput = document.getElementById('searchInput');
-    const searchResults = document.getElementById('searchResults');
-    const searchTerm = searchInput.value.trim();
-    
-    if (!searchTerm) {
-        searchResults.style.display = 'none';
-        return;
-    }
+  const searchInput = document.getElementById('searchInput');
+  const term = searchInput.value.trim();
 
-    try {
-        const response = await databases.listDocuments(
-            config.databaseId,
-            config.collectionId,
-            [
-                Appwrite.Query.search('name', searchTerm)
-            ]
-        );
+  if (!term) {
+    displayResults([]);
+    return;
+  }
 
-        // In ra tên từ kết quả tìm kiếm
-        if (response.documents.length > 0) {
-            console.log('Tên:', response.documents[0].name);
-        }
-
-        handleSearchResults(response.documents);
-        
-    } catch (error) {
-        console.error('Lỗi khi tìm kiếm:', error);
-        searchResults.innerHTML = '<div class="search-result-item">Có lỗi xảy ra khi tìm kiếm</div>';
-        searchResults.style.display = 'block';
-    }
-}
-
-// Xử lý và hiển thị kết quả tìm kiếm
-function handleSearchResults(documents) {
-    const searchResults = document.getElementById('searchResults');
-    
-    searchResults.innerHTML = '';
-    
-    if (documents.length === 0) {
-        searchResults.innerHTML = '<div class="search-result-item">Không tìm thấy kết quả</div>';
+  try {
+    const url = `${config.endpoint}/databases/${config.databaseId}/collections/${config.collectionId}/documents?queries[0]=search("name", "${term}")`;
+    const response = await fetch(url, {
+      method: 'GET',
+      mode: 'no-cors',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Appwrite-Project': config.projectId,
+        'X-Appwrite-Key': config.appwriteId,
+      }
+    });
+    if (response.ok) {
+      const data = await response.json();
+      displayResults(data.documents);
     } else {
-        documents.forEach(doc => {
-            const resultItem = document.createElement('div');
-            resultItem.className = 'search-result-item';
-            resultItem.textContent = `${doc.name}`;
-            resultItem.onclick = () => {
-                document.getElementById('searchInput').value = doc.name;
-                searchResults.style.display = 'none';
-            };
-            searchResults.appendChild(resultItem);
-        });
+      console.error('Lỗi:', response.status);
+      displayResults([]);
     }
-    
-    searchResults.style.display = 'block';
+  } catch (error) {
+    console.error(error);
+    displayResults([]);
+  }
 }
 
-// Thêm sự kiện click cho nút tìm kiếm
-document.querySelector('.search-btn').addEventListener('click', performSearch);
 
-// Thêm sự kiện input cho ô tìm kiếm (tìm kiếm realtime)
-document.getElementById('searchInput').addEventListener('input', performSearch);
+function displayResults(documents) {
+  const resultsContainer = document.getElementById('searchResults');
+  resultsContainer.innerHTML = '';
+  if (documents.length === 0) {
+    resultsContainer.innerHTML = '<div class="search-result-item">Không tìm thấy kết quả</div>';
+    return;
+  }
+  documents.forEach(doc => {
+    const item = document.createElement('div');
+    item.className = 'search-result-item';
+    item.textContent = doc.name;
+    item.addEventListener('click', () => {
+      document.getElementById('searchInput').value = doc.name;
+      resultsContainer.innerHTML = '';
+    });
+    resultsContainer.appendChild(item);
+  });
+}
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('searchInput').addEventListener('input', performSearch);
+});
+
+
