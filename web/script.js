@@ -1,68 +1,91 @@
-const ENDPOINT = APPWRITE_ENDPOINT;
-const PROJECT_ID = APPWRITE_PROJECT_ID;
-const DATABASE_ID = APPWRITE_DATABASE_ID;
-const COLLECTION_ID = APPWRITE_COLLECTION_ID;
-const APPWRITE_ID = APPWRITE_ID;
-
-const client = new Appwrite.Client();
-client
-  .setEndpoint(ENDPOINT)
-  .setProject(PROJECT_ID);
-
-const databases = new Appwrite.Databases(client);
-
-async function performSearch() {
-  const searchInput = document.getElementById('searchInput');
-  const term = searchInput.value.trim();
-
-  if (!term) {
-    displayResults([]);
-    return;
-  }
-
+async function getEnvVars() {
   try {
-    const url = `${ENDPOINT}/databases/${DATABASE_ID}/collections/${COLLECTION_ID}/documents?queries[0]=search("name", "${term}")`;
-    const response = await fetch(url, {
-      method: 'GET',
-      mode: 'no-cors',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Appwrite-Project': PROJECT_ID,
-        'X-Appwrite-Key': APPWRITE_ID,
+      const response = await fetch('/_env'); 
+      if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
       }
-    });
-    if (response.ok) {
-      const data = await response.json();
-      displayResults(data.documents);
-    } else {
-      console.error('Lỗi:', response.status);
-      displayResults([]);
-    }
+      return await response.json();
   } catch (error) {
-    console.error(error);
-    displayResults([]);
+      console.error('Failed to fetch environment variables:', error);
+      return {};
   }
 }
 
-function displayResults(documents) {
-  const resultsContainer = document.getElementById('searchResults');
-  resultsContainer.innerHTML = '';
-  if (documents.length === 0) {
-    resultsContainer.innerHTML = '<div class="search-result-item">Không tìm thấy kết quả</div>';
-    return;
+async function init() {
+  const env = await getEnvVars();
+
+  // Environment variables from Cloudflare Pages
+  const ENDPOINT = env.ENDPOINT;
+  const PROJECT_ID = env.PROJECT_ID;
+  const DATABASE_ID = env.DATABASE_ID;
+  const COLLECTION_ID = env.COLLECTION_ID;
+  const APPWRITE_ID = env.APPWRITE_ID;
+
+  console.log("Loaded Environment Variables:", env); // Debugging log
+
+  // Initialize Appwrite Client
+  const client = new Appwrite.Client();
+  client.setEndpoint(ENDPOINT).setProject(PROJECT_ID);
+  
+  const databases = new Appwrite.Databases(client);
+
+  async function performSearch() {
+      const searchInput = document.getElementById('searchInput');
+      const term = searchInput.value.trim();
+
+      if (!term) {
+          displayResults([]);
+          return;
+      }
+
+      try {
+          // Corrected API query format
+          const url = `${ENDPOINT}/databases/${DATABASE_ID}/collections/${COLLECTION_ID}/documents?queries[]=${encodeURIComponent(`search("name", "${term}")`)}`;
+
+          const response = await fetch(url, {
+              method: 'GET',
+              mode: 'cors', // Use 'cors' instead of 'no-cors'
+              headers: {
+                  'Content-Type': 'application/json',
+                  'X-Appwrite-Project': PROJECT_ID,
+                  'X-Appwrite-Key': APPWRITE_ID, // Secure Key from Cloudflare
+              }
+          });
+
+          if (!response.ok) {
+              throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+
+          const data = await response.json();
+          displayResults(data.documents);
+      } catch (error) {
+          console.error('Error fetching search results:', error);
+          displayResults([]);
+      }
   }
-  documents.forEach(doc => {
-    const item = document.createElement('div');
-    item.className = 'search-result-item';
-    item.textContent = doc.name;
-    item.addEventListener('click', () => {
-      document.getElementById('searchInput').value = doc.name;
+
+  function displayResults(documents) {
+      const resultsContainer = document.getElementById('searchResults');
       resultsContainer.innerHTML = '';
-    });
-    resultsContainer.appendChild(item);
-  });
+
+      if (documents.length === 0) {
+          resultsContainer.innerHTML = '<div class="search-result-item">Không tìm thấy kết quả</div>';
+          return;
+      }
+
+      documents.forEach(doc => {
+          const item = document.createElement('div');
+          item.className = 'search-result-item';
+          item.textContent = doc.name;
+          item.addEventListener('click', () => {
+              document.getElementById('searchInput').value = doc.name;
+              resultsContainer.innerHTML = '';
+          });
+          resultsContainer.appendChild(item);
+      });
+  }
+
+  document.getElementById('searchInput').addEventListener('input', performSearch);
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('searchInput').addEventListener('input', performSearch);
-});
+document.addEventListener('DOMContentLoaded', init);
