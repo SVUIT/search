@@ -1,16 +1,16 @@
-// Import your configuration
-import { config } from '../function/config.js';
+const ENDPOINT = process.env.APPWRITE_ENDPOINT;
+const PROJECT_ID = process.env.APPWRITE_PROJECT_ID;
+const DATABASE_ID = process.env.APPWRITE_DATABASE_ID;
+const COLLECTION_ID = process.env.APPWRITE_COLLECTION_ID;
+const APPWRITE_ID = process.env.APPWRITE_ID;
 
-// Initialize the Appwrite client
 const client = new Appwrite.Client();
 client
-  .setEndpoint(config.endpoint)   // Your Appwrite API Endpoint
-  .setProject(config.projectId);    // Your Appwrite Project ID
+  .setEndpoint(ENDPOINT)
+  .setProject(PROJECT_ID);
 
-// Initialize the Databases service
 const databases = new Appwrite.Databases(client);
 
-// Function to perform the search
 async function performSearch() {
   const searchInput = document.getElementById('searchInput');
   const term = searchInput.value.trim();
@@ -21,14 +21,14 @@ async function performSearch() {
   }
 
   try {
-    const url = `${config.endpoint}/databases/${config.databaseId}/collections/${config.collectionId}/documents?queries[0]=search("name", "${term}")`;
+    const url = `${ENDPOINT}/databases/${DATABASE_ID}/collections/${COLLECTION_ID}/documents?queries[0]=search("name", "${term}")`;
     const response = await fetch(url, {
       method: 'GET',
       mode: 'no-cors',
       headers: {
         'Content-Type': 'application/json',
-        'X-Appwrite-Project': config.projectId,
-        'X-Appwrite-Key': config.appwriteId,
+        'X-Appwrite-Project': PROJECT_ID,
+        'X-Appwrite-Key': APPWRITE_ID,
       }
     });
     if (response.ok) {
@@ -43,7 +43,6 @@ async function performSearch() {
     displayResults([]);
   }
 }
-
 
 function displayResults(documents) {
   const resultsContainer = document.getElementById('searchResults');
@@ -64,9 +63,6 @@ function displayResults(documents) {
   });
 }
 
-
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('searchInput').addEventListener('input', performSearch);
 });
-
-
