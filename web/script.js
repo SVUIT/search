@@ -1,13 +1,14 @@
 const ENDPOINT = env.APPWRITE_ENDPOINT;
-const PROJECT_ID = APPWRITE_PROJECT_ID;
-const DATABASE_ID = APPWRITE_DATABASE_ID;
-const COLLECTION_ID = APPWRITE_COLLECTION_ID;
-const APPWRITE_ID = APPWRITE_ID;
+const PROJECT_ID = env.APPWRITE_PROJECT_ID;
+const DATABASE_ID = env.APPWRITE_DATABASE_ID;
+const COLLECTION_ID = env.APPWRITE_COLLECTION_ID;
+const APPWRITE_ID = env.APPWRITE_ID;
 
 const client = new Appwrite.Client();
 client
   .setEndpoint(ENDPOINT)
-  .setProject(PROJECT_ID);
+  .setProject(PROJECT_ID)
+  .setKey(APPWRITE_API_KEY);
 
 const databases = new Appwrite.Databases(client);
 
@@ -21,25 +22,12 @@ async function performSearch() {
   }
 
   try {
-    const url = `${ENDPOINT}/databases/${DATABASE_ID}/collections/${COLLECTION_ID}/documents?queries[0]=search("name", "${term}")`;
-    const response = await fetch(url, {
-      method: 'GET',
-      mode: 'no-cors',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Appwrite-Project': PROJECT_ID,
-        'X-Appwrite-Key': APPWRITE_ID,
-      }
-    });
-    if (response.ok) {
-      const data = await response.json();
-      displayResults(data.documents);
-    } else {
-      console.error('Lỗi:', response.status);
-      displayResults([]);
-    }
+    const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID, [
+      Appwrite.Query.search('name', term)
+    ]);
+    displayResults(response.documents);
   } catch (error) {
-    console.error(error);
+    console.error('Lỗi:', error);
     displayResults([]);
   }
 }
