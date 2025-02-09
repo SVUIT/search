@@ -1,16 +1,15 @@
 async function loadAppwriteConfig() {
   try {
-    const response = await fetch('/config'); 
+    const response = await fetch('/config'); // Fetch environment variables from the function
     const envVars = await response.json();
 
     const client = new Appwrite.Client();
     client
       .setEndpoint(envVars.endpoint)
       .setProject(envVars.projectId)
-      .setKey(envVars.appwriteApiKey); 
+      .setKey(envVars.appwriteApiKey);
 
     const databases = new Appwrite.Databases(client);
-
     return { databases, envVars };
   } catch (error) {
     console.error("Error loading environment variables:", error);
