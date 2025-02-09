@@ -1,16 +1,22 @@
-const ENDPOINT = env.APPWRITE_ENDPOINT;
-const PROJECT_ID = env.APPWRITE_PROJECT_ID;
-const DATABASE_ID = env.APPWRITE_DATABASE_ID;
-const COLLECTION_ID = env.APPWRITE_COLLECTION_ID;
-const APPWRITE_ID = env.APPWRITE_ID;
+async function loadAppwriteConfig() {
+  try {
+    const response = await fetch('/config'); 
+    const envVars = await response.json();
 
-const client = new Appwrite.Client();
-client
-  .setEndpoint(ENDPOINT)
-  .setProject(PROJECT_ID)
-  .setKey(APPWRITE_API_KEY);
+    const client = new Appwrite.Client();
+    client
+      .setEndpoint(envVars.endpoint)
+      .setProject(envVars.projectId)
+      .setKey(envVars.appwriteApiKey); 
 
-const databases = new Appwrite.Databases(client);
+    const databases = new Appwrite.Databases(client);
+
+    return { databases, envVars };
+  } catch (error) {
+    console.error("Error loading environment variables:", error);
+    return null;
+  }
+}
 
 async function performSearch() {
   const searchInput = document.getElementById('searchInput');
@@ -21,10 +27,16 @@ async function performSearch() {
     return;
   }
 
+  const appwriteConfig = await loadAppwriteConfig();
+  if (!appwriteConfig) return;
+
   try {
-    const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID, [
-      Appwrite.Query.search('name', term)
-    ]);
+    const response = await appwriteConfig.databases.listDocuments(
+      appwriteConfig.envVars.databaseId,
+      appwriteConfig.envVars.collectionId,
+      [Appwrite.Query.search('name', term)]
+    );
+
     displayResults(response.documents);
   } catch (error) {
     console.error('Lỗi:', error);
@@ -35,10 +47,12 @@ async function performSearch() {
 function displayResults(documents) {
   const resultsContainer = document.getElementById('searchResults');
   resultsContainer.innerHTML = '';
+
   if (documents.length === 0) {
     resultsContainer.innerHTML = '<div class="search-result-item">Không tìm thấy kết quả</div>';
     return;
   }
+
   documents.forEach(doc => {
     const item = document.createElement('div');
     item.className = 'search-result-item';
