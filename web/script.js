@@ -1,5 +1,4 @@
 import { Client, Databases } from "https://esm.sh/appwrite";
-
 const client = new Client();
 client
   .setEndpoint(import.meta.env.VITE_ENDPOINT)
