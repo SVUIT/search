@@ -1,21 +1,15 @@
-async function loadAppwriteConfig() {
-  try {
-    const response = await fetch('/config'); // Fetch environment variables from the function
-    const envVars = await response.json();
+const ENDPOINT = APPWRITE_ENDPOINT;
+const PROJECT_ID = APPWRITE_PROJECT_ID;
+const DATABASE_ID = APPWRITE_DATABASE_ID;
+const COLLECTION_ID = APPWRITE_COLLECTION_ID;
+const APPWRITE_ID = APPWRITE_ID;
 
-    const client = new Appwrite.Client();
-    client
-      .setEndpoint(envVars.endpoint)
-      .setProject(envVars.projectId)
-      .setKey(envVars.appwriteApiKey);
+const client = new Appwrite.Client();
+client
+  .setEndpoint(ENDPOINT)
+  .setProject(PROJECT_ID);
 
-    const databases = new Appwrite.Databases(client);
-    return { databases, envVars };
-  } catch (error) {
-    console.error("Error loading environment variables:", error);
-    return null;
-  }
-}
+const databases = new Appwrite.Databases(client);
 
 async function performSearch() {
   const searchInput = document.getElementById('searchInput');
@@ -26,19 +20,26 @@ async function performSearch() {
     return;
   }
 
-  const appwriteConfig = await loadAppwriteConfig();
-  if (!appwriteConfig) return;
-
   try {
-    const response = await appwriteConfig.databases.listDocuments(
-      appwriteConfig.envVars.databaseId,
-      appwriteConfig.envVars.collectionId,
-      [Appwrite.Query.search('name', term)]
-    );
-
-    displayResults(response.documents);
+    const url = `${ENDPOINT}/databases/${DATABASE_ID}/collections/${COLLECTION_ID}/documents?queries[0]=search("name", "${term}")`;
+    const response = await fetch(url, {
+      method: 'GET',
+      mode: 'no-cors',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Appwrite-Project': PROJECT_ID,
+        'X-Appwrite-Key': APPWRITE_ID,
+      }
+    });
+    if (response.ok) {
+      const data = await response.json();
+      displayResults(data.documents);
+    } else {
+      console.error('Lỗi:', response.status);
+      displayResults([]);
+    }
   } catch (error) {
-    console.error('Lỗi:', error);
+    console.error(error);
     displayResults([]);
   }
 }
@@ -46,12 +47,10 @@ async function performSearch() {
 function displayResults(documents) {
   const resultsContainer = document.getElementById('searchResults');
   resultsContainer.innerHTML = '';
-
   if (documents.length === 0) {
     resultsContainer.innerHTML = '<div class="search-result-item">Không tìm thấy kết quả</div>';
     return;
   }
-
   documents.forEach(doc => {
     const item = document.createElement('div');
     item.className = 'search-result-item';
