@@ -1,6 +1,6 @@
 async function getEnvVars() {
   try {
-      const response = await fetch('/_env'); 
+      const response = await fetch(`${window.location.origin}/_env`); 
       if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
       }
@@ -14,14 +14,12 @@ async function getEnvVars() {
 async function init() {
   const env = await getEnvVars();
 
-  // Environment variables from Cloudflare Pages
   const ENDPOINT = env.ENDPOINT;
   const PROJECT_ID = env.PROJECT_ID;
   const DATABASE_ID = env.DATABASE_ID;
   const COLLECTION_ID = env.COLLECTION_ID;
   const APPWRITE_ID = env.APPWRITE_ID;
 
-  console.log("Loaded Environment Variables:", env); // Debugging log
 
   // Initialize Appwrite Client
   const client = new Appwrite.Client();
@@ -39,7 +37,6 @@ async function init() {
       }
 
       try {
-          // Corrected API query format
           const url = `${ENDPOINT}/databases/${DATABASE_ID}/collections/${COLLECTION_ID}/documents?queries[]=${encodeURIComponent(`search("name", "${term}")`)}`;
 
           const response = await fetch(url, {
