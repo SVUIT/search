@@ -1,8 +1,3 @@
-const PROJECT_ID = APPWRITE_PROJECT_ID;
-const DATABASE_ID = APPWRITE_DATABASE_ID;
-const COLLECTION_ID = APPWRITE_COLLECTION_ID;
-const APPWRITE_ID = APPWRITE_ID;
-
 const client = new Appwrite.Client();
 client
   .setEndpoint(ENDPOINT)
