@@ -1,4 +1,6 @@
 import { Client, Databases } from "https://esm.sh/appwrite";
+require(['config'],function(){
+
 require('dotenv').config();
 const client = new Client();
 client
@@ -66,6 +68,8 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("searchInput").addEventListener("input", performSearch);
 });
 
-// Debugging: Log environment variables (remove in production)
-console.log("API Endpoint:", import.meta.env.VITE_ENDPOINT);
-console.log("Project ID:", import.meta.env.VITE_PROJECT_ID);
+});
+
+
+
+
