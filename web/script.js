@@ -1,7 +1,8 @@
 import { Client, Databases } from "https://esm.sh/appwrite";
+require('dotenv).config();
 const client = new Client();
 client
-  .setEndpoint(import.meta.env.VITE_ENDPOINT)
+  .setEndpoint(process.env.VITE_ENDPOINT)
   .setProject(import.meta.env.VITE_PROJECT_ID);
 
 const databases = new Databases(client);
