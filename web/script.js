@@ -1,5 +1,5 @@
 import { Client, Databases } from "https://esm.sh/appwrite";
-require('dotenv).config();
+require('dotenv').config();
 const client = new Client();
 client
   .setEndpoint(process.env.VITE_ENDPOINT)
