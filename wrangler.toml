@@ -1,4 +1,0 @@
-name = "my-appwrite-worker"
-type = "javascript"
-
-compatibility_flags = ["nodejs_compat"]
