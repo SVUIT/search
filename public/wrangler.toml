@@ -1,0 +1,4 @@
+name = "search"
+type = "javascript"
+
+compatibility_flags = ["nodejs_compat"]
